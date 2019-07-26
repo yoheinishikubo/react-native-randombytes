@@ -3,7 +3,7 @@ if (typeof Buffer === 'undefined') {
 }
 
 let sjcl = require('sjcl')
-import { Random } from 'expo';
+import * as Random from 'expo-random'
 
 function noop () {}
 
