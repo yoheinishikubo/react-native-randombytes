@@ -41,7 +41,7 @@ export function randomBytes (length, cb) {
   }
 
   Random.getRandomBytesAsync(length).then(randomBytes=>{
-    cb(Buffer.from(randomBytes));
+    cb(null, Buffer.from(randomBytes));
   }).catch(cb);
 }
 
