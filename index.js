@@ -2,8 +2,13 @@ if (typeof Buffer === 'undefined') {
   global.Buffer = require('buffer').Buffer
 }
 
-let sjcl = require('sjcl')
 import * as Random from 'expo-random'
+
+export const RNS_MAX = 1024;
+
+const max = (a, b) => (a < b ? b : a);
+let RNS = Buffer.allocUnsafe(0);
+
 
 function noop () {}
 
@@ -11,33 +16,27 @@ function toBuffer (nativeStr) {
   return new Buffer(nativeStr, 'base64')
 }
 
-function init () {
-    seedSJCL()
+export async function init() {
+  await generate(RNS_MAX);
 }
 
-function addEntropy (entropyBuf) {
-  let hexString = entropyBuf.toString('hex')
-  let stanfordSeed = sjcl.codec.hex.toBits(hexString)
-  sjcl.random.addEntropy(stanfordSeed)
-}
+async function generate(byteCount) {
+  if (byteCount == 0) {
+    return;
+  }
 
-export function seedSJCL (cb) {
-  cb = cb || noop
-  randomBytes(4096, function (err, buffer) {
-    if (err) return cb(err)
-
-    addEntropy(buffer)
-  })
+  const buff = await Random.getRandomBytesAsync(byteCount);
+  RNS = Buffer.concat([RNS, Buffer.from(buff)]);
 }
 
 export function randomBytes (length, cb) {
   if (!cb) {
-    let size = length
-    let wordCount = Math.ceil(size * 0.25)
-    let randomBytes = sjcl.random.randomWords(wordCount, 10)
-    let hexString = sjcl.codec.hex.fromBits(randomBytes)
-    hexString = hexString.substr(0, size * 2)
-    return new Buffer(hexString, 'hex')
+      const ret = Buffer.from(RNS.slice(0, length));
+      RNS = RNS.slice(length, RNS.length - length);
+
+      generate(max(0, RNS_MAX - RNS.length));
+
+      return ret;
   }
 
   Random.getRandomBytesAsync(length).then(randomBytes=>{
